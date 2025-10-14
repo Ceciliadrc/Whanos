@@ -15,3 +15,6 @@ jenkins:
               - "Overall/Administer"
             entries:
               - user: "admin"
+
+jobs:
+  - file: /var/jenkins_home/Jenkins/jobs.groovy
