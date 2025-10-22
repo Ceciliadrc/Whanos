@@ -1,0 +1,51 @@
+pipeline {
+  agent any
+
+  parameters {
+    string(name: 'IMAGE_URL',   defaultValue: '')
+    string(name: 'APP_NAME', defaultValue: '')
+    string(name: 'HOST_NAME', defaultValue: '', description: "laisser vide pour APP_NAME.dop.io")
+    text(  name: 'YAML_CONTENT', defaultValue: '', description: 'User YAML file')
+  }
+
+  environment {
+    DEFAULT_REPLICAS = '1'
+    DEFAULT_RESOURCE = ''
+    DEFAULT_PORTS = ''
+    PLACE_HOLDER_RESOURCE = '
+            requests:
+              cpu: "__REQ_CPU__"
+              memory: "__REQ_MEM__"
+            limits:
+              cpu: "__LIM_CPU__"
+              memory: "__LIM_MEM__"'
+    PLACE_HOLDER_PORT = '
+            - name: __PORT_NAME__
+              containerPort: __PORT__
+              protocol: TCP'
+    HOST_NAME = "${params.HOST_NAME ?: "${params.APP_NAME}.dop.io"}"
+  }
+
+  stages {
+
+    stage('Read and Save specs') {
+
+        steps {
+
+            #Replicas
+            REPLICAS=$(printf '%s' "${YAML_CONTENT:-{}}" | yq '.deployment.replicas // 1' -)
+
+            #Resources
+            REQ_CPU=$(printf '%s' "${YAML_CONTENT:-{}}" | yq '.deployment.resources.requests.cpu // "100m"' -)
+            REQ_MEM=$(printf '%s' "${YAML_CONTENT:-{}}" | yq '.deployment.resources.requests.memory // "128Mi"' -)
+            LIM_CPU=$(printf '%s' "${YAML_CONTENT:-{}}" | yq '.deployment.resources.limits.cpu   // "500m"' -)
+            LIM_MEM=$(printf '%s' "${YAML_CONTENT:-{}}" | yq '.deployment.resources.limits.memory // "256Mi"' -)
+
+            #Ports
+
+        }
+
+    }
+    
+  }
+}
