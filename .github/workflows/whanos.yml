@@ -1,0 +1,31 @@
+name: whanos
+
+on:
+  push:
+    branches-ignore:
+      - 'ga-ignore-'
+  pull_request:
+    branches-ignore:
+      - 'ga-ignore-'
+
+env:
+  MIRROR_URL: ${{vars.MIRROR_URL}}
+
+jobs:
+  push_to_mirror:
+    runs-on: ubuntu-latest
+
+    steps:
+      - id: check_repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          repository: ''
+
+      - id: mirror_push
+        uses: pixta-dev/repository-mirroring-action@v1
+        with:
+          target_repo_url:
+            ${{env.MIRROR_URL}}
+          ssh_private_key:
+            ${{secrets.WHANOS_SSH_MIRROR}}
