@@ -30,22 +30,75 @@ pipeline {
 
     stage('Read and Save specs') {
 
-        steps {
+      steps {
+        sh '''#!/usr/bin/env bash
+        
+          set -euo pipefail
 
-            #Replicas
-            REPLICAS=$(printf '%s' "${YAML_CONTENT:-{}}" | yq '.deployment.replicas // 1' -)
+          #Replicas
+          REPLICAS = $(printf '%s' "${YAML_CONTENT:-{}}" | yq '.deployment.replicas // 1' -)
 
-            #Resources
-            REQ_CPU=$(printf '%s' "${YAML_CONTENT:-{}}" | yq '.deployment.resources.requests.cpu // "100m"' -)
-            REQ_MEM=$(printf '%s' "${YAML_CONTENT:-{}}" | yq '.deployment.resources.requests.memory // "128Mi"' -)
-            LIM_CPU=$(printf '%s' "${YAML_CONTENT:-{}}" | yq '.deployment.resources.limits.cpu   // "500m"' -)
-            LIM_MEM=$(printf '%s' "${YAML_CONTENT:-{}}" | yq '.deployment.resources.limits.memory // "256Mi"' -)
+          #Resources
+          REQ_CPU = $(printf '%s' "${YAML_CONTENT:-{}}" | yq '.deployment.resources.requests.cpu // "100m"' -)
+          REQ_MEM = $(printf '%s' "${YAML_CONTENT:-{}}" | yq '.deployment.resources.requests.memory // "128Mi"' -)
+          LIM_CPU = $(printf '%s' "${YAML_CONTENT:-{}}" | yq '.deployment.resources.limits.cpu   // "500m"' -)
+          LIM_MEM = $(printf '%s' "${YAML_CONTENT:-{}}" | yq '.deployment.resources.limits.memory // "256Mi"' -)
 
-            #Ports
+          RESOURCES_BLOCK = ""
 
-        }
+          if [ -n "${REQ_CPU}${REQ_MEM}${LIM_CPU}${LIM_MEM}" ]; then
+            printf -v RESOURCES_BLOCK '%s' "resources:\n"
+
+            if [ -n "${REQ_CPU}${REQ_MEM}" ]; then
+              printf -v RESOURCES_BLOCK '%s%s' "$RESOURCES_BLOCK" "requests:\n"
+              [ -n "$REQ_CPU" ] && printf -v RESOURCES_BLOCK '%s%s' "$RESOURCES_BLOCK" "cpu: \"$REQ_CPU\"\n"
+              [ -n "$REQ_MEM" ] && printf -v RESOURCES_BLOCK '%s%s' "$RESOURCES_BLOCK" "memory: \"$REQ_MEM\"\n"
+            fi
+
+            if [ -n "${LIM_CPU}${LIM_MEM}" ]; then
+              printf -v RESOURCES_BLOCK '%s%s' "$RESOURCES_BLOCK" "            limits:\n"
+              [ -n "$LIM_CPU" ] && printf -v RESOURCES_BLOCK '%s%s' "$RESOURCES_BLOCK" "cpu: \"$LIM_CPU\"\n"
+              [ -n "$LIM_MEM" ] && printf -v RESOURCES_BLOCK '%s%s' "$RESOURCES_BLOCK" "memory: \"$LIM_MEM\"\n"
+            fi
+
+          fi
+
+          #Ports
+          PORTS_JSON = $(printf '%s' "${YAML_CONTENT:-{}}" | yq -o=json '.deployment.ports // []' -)
+
+          FIRST_PORT = $(echo "$PORTS_JSON" | jq -r '.[0] // empty')
+
+          mapfile -t PORTS < <(echo "$PORTS_JSON" | jq -r '.[]')
+
+          PORTS_BLOCK = "$(
+            for p in \"${PORTS[@]}\"; do
+              printf \"\n- name: web-$p\nport: $p\"
+            done
+          )"
+
+          #Enregistrement
+          {
+            printf 'REPLICAS=%s\n' "$REPLICAS"
+            printf 'RESOURCES_BLOCK=%s\n' "$RESOURCES_BLOCK"
+            printf 'FIRST_PORT=%s\n' "$FIRST_PORT"
+            printf 'PORTS_BLOCK=%s\n' "$PORTS_BLOCK"
+          } >> .build_env
+        
+        '''
+
+      }
 
     }
-    
+
+    stage('Write specs in the duplicates files') {
+
+      steps {
+
+        source .build_env
+
+      }
+
+    }
+
   }
 }
