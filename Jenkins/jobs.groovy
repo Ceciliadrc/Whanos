@@ -97,6 +97,9 @@ job('link-project') {
         stringParam('REPO_URL', '', 'Git repository URL')
         stringParam('PROJECT_NAME', '', 'Name for the job to create')
     }
-    steps {}
-
+    steps {
+        parallel (
+                
+        )
+    }
 }
