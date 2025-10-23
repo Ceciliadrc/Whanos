@@ -1,0 +1,4 @@
+FROM whanos-befunge
+WORKDIR /app
+COPY . .
+CMD ["befunge93", "app/main.bf"]
