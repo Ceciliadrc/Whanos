@@ -12,17 +12,6 @@ pipeline {
     DEFAULT_REPLICAS = '1'
     DEFAULT_RESOURCE = ''
     DEFAULT_PORTS = ''
-    PLACE_HOLDER_RESOURCE = '
-            requests:
-              cpu: "__REQ_CPU__"
-              memory: "__REQ_MEM__"
-            limits:
-              cpu: "__LIM_CPU__"
-              memory: "__LIM_MEM__"'
-    PLACE_HOLDER_PORT = '
-            - name: __PORT_NAME__
-              containerPort: __PORT__
-              protocol: TCP'
     HOST_NAME = "${params.HOST_NAME ?: "${params.APP_NAME}.dop.io"}"
   }
 
@@ -95,6 +84,35 @@ pipeline {
       steps {
 
         source .build_env
+        
+        #Deployment
+        cp template.deployment.yaml "${params.APP_NAME}.deployment.yaml"
+        sed -i \
+          -e "s|__APP_NAME__|${params.APP_NAME}|g" \
+          -e "s|__IMAGE_URL__|${IMAGE}|g" \
+          -e "s|__REPLICAS__|${REPLICAS}|g" \
+          "${APP}.deployment.yaml"
+
+        ${PORTS_BLOCK} ? sed -i "s|__PORTS__|${PORTS_BLOCK}|" "${params.APP_NAME}.deployment.yaml" : sed -i "/__PORTS__/d" "${params.APP_NAME}.deployment.yaml"
+
+        ${RESOURCES_BLOCK} ? sed -i "s|__RESOURCES__|${RESOURCES_BLOCK}|" "${params.APP_NAME}.deployment.yaml" : sed -i "/__RESOURCES__/d" "${params.APP_NAME}.deployment.yaml"
+
+
+        if [ -n "${PORTS_BLOCK}" ]; then
+
+          #Ingress
+          cp template.ingress.yaml "${params.APP_NAME}.ingress.yaml"
+
+          #Service
+          cp template.service.yaml "${params.APP_NAME}.service.yaml"
+
+          #Traefik
+          cp traefik.deployment.yaml "${params.APP_NAME}.traefik.deployment.yaml"
+          cp traefik.rbac.yaml "${params.APP_NAME}.traefik.rbac.yaml"
+          cp traefik.service.yaml "${params.APP_NAME}.traefik.service.yaml"
+
+          // TODO: Remplir fichiers app-name.*.yaml
+        fi
 
       }
 
