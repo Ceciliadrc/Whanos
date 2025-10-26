@@ -1,20 +1,11 @@
-##
-## EPITECH PROJECT, 2025
-## PROJECT [WSL: Ubuntu]
-## File description:
-## poll.service.yaml
-##
-
 apiVersion: v1
 kind: Service
 metadata:
-  labels:
-    k8s-app: __APP_NAME__
   name: __APP_NAME_DNS__
   namespace: default
 spec:
-  ports:
-    __PORTS__
   selector:
     app: __APP_NAME__
+  ports:
+    __PORTS__
   type: ClusterIP

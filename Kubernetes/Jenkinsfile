@@ -3,15 +3,14 @@ pipeline {
 
   parameters {
     string(name: 'IMAGE_URL',   defaultValue: '')
-    string(name: 'APP_NAME', defaultValue: '')
-    string(name: 'HOST_NAME', defaultValue: '', description: "laisser vide pour APP_NAME.dop.io")
-    text(  name: 'YAML_CONTENT', defaultValue: '', description: 'User YAML file')
+    string(name: 'APP_NAME',    defaultValue: '')
+    string(name: 'HOST_NAME',   defaultValue: '', description: 'laisser vide pour APP_NAME.dop.io')
+    text  (name: 'YAML_CONTENT', defaultValue: '', description: 'User YAML file')
   }
 
   environment {
-    DEFAULT_REPLICAS = '1'
-    DEFAULT_RESOURCE = ''
-    DEFAULT_PORTS = ''
+    APP_NAME  = "${params.APP_NAME}"
+    IMAGE_URL = "${params.IMAGE_URL}"
     HOST_NAME = "${params.HOST_NAME ?: "${params.APP_NAME}.dop.io"}"
   }
 
@@ -20,58 +19,115 @@ pipeline {
     stage('Read and Save specs') {
 
       steps {
+
         sh '''#!/usr/bin/env bash
-        
           set -euo pipefail
 
-          #Replicas
-          REPLICAS = $(printf '%s' "${YAML_CONTENT:-{}}" | yq '.deployment.replicas // 1' -)
+          YAML_CONTENT="${YAML_CONTENT:-{}}"
 
-          #Resources
-          REQ_CPU = $(printf '%s' "${YAML_CONTENT:-{}}" | yq '.deployment.resources.requests.cpu // "100m"' -)
-          REQ_MEM = $(printf '%s' "${YAML_CONTENT:-{}}" | yq '.deployment.resources.requests.memory // "128Mi"' -)
-          LIM_CPU = $(printf '%s' "${YAML_CONTENT:-{}}" | yq '.deployment.resources.limits.cpu   // "500m"' -)
-          LIM_MEM = $(printf '%s' "${YAML_CONTENT:-{}}" | yq '.deployment.resources.limits.memory // "256Mi"' -)
+          # Replicas
+          REPLICAS=$(printf '%s' "$YAML_CONTENT" | yq '.deployment.replicas // 1' -)
 
-          RESOURCES_BLOCK = ""
+          # Resources
+          REQ_CPU=$(printf '%s' "$YAML_CONTENT" | yq '.deployment.resources.requests.cpu // ""' -)
+          REQ_MEM=$(printf '%s' "$YAML_CONTENT" | yq '.deployment.resources.requests.memory // ""' -)
+          LIM_CPU=$(printf '%s' "$YAML_CONTENT" | yq '.deployment.resources.limits.cpu   // ""' -)
+          LIM_MEM=$(printf '%s' "$YAML_CONTENT" | yq '.deployment.resources.limits.memory // ""' -)
 
+          RESOURCES_BLOCK=""
           if [ -n "${REQ_CPU}${REQ_MEM}${LIM_CPU}${LIM_MEM}" ]; then
-            printf -v RESOURCES_BLOCK '%s' "resources:\n"
-
+            
             if [ -n "${REQ_CPU}${REQ_MEM}" ]; then
-              printf -v RESOURCES_BLOCK '%s%s' "$RESOURCES_BLOCK" "requests:\n"
-              [ -n "$REQ_CPU" ] && printf -v RESOURCES_BLOCK '%s%s' "$RESOURCES_BLOCK" "cpu: \"$REQ_CPU\"\n"
-              [ -n "$REQ_MEM" ] && printf -v RESOURCES_BLOCK '%s%s' "$RESOURCES_BLOCK" "memory: \"$REQ_MEM\"\n"
+              RESOURCES_BLOCK="${RESOURCES_BLOCK}\n  requests:"
+              [ -n "$REQ_CPU" ] && RESOURCES_BLOCK="${RESOURCES_BLOCK}\n    cpu: \\"$REQ_CPU\\""
+              [ -n "$REQ_MEM" ] && RESOURCES_BLOCK="${RESOURCES_BLOCK}\n    memory: \\"$REQ_MEM\\""
             fi
-
+            
             if [ -n "${LIM_CPU}${LIM_MEM}" ]; then
-              printf -v RESOURCES_BLOCK '%s%s' "$RESOURCES_BLOCK" "            limits:\n"
-              [ -n "$LIM_CPU" ] && printf -v RESOURCES_BLOCK '%s%s' "$RESOURCES_BLOCK" "cpu: \"$LIM_CPU\"\n"
-              [ -n "$LIM_MEM" ] && printf -v RESOURCES_BLOCK '%s%s' "$RESOURCES_BLOCK" "memory: \"$LIM_MEM\"\n"
+              RESOURCES_BLOCK="${RESOURCES_BLOCK}\n  limits:"
+              [ -n "$LIM_CPU" ] && RESOURCES_BLOCK="${RESOURCES_BLOCK}\n    cpu: \\"$LIM_CPU\\""
+              [ -n "$LIM_MEM" ] && RESOURCES_BLOCK="${RESOURCES_BLOCK}\n    memory: \\"$LIM_MEM\\""
             fi
-
+          
           fi
 
-          #Ports
-          PORTS_JSON = $(printf '%s' "${YAML_CONTENT:-{}}" | yq -o=json '.deployment.ports // []' -)
-
-          FIRST_PORT = $(echo "$PORTS_JSON" | jq -r '.[0] // empty')
-
+          # Ports
+          PORTS_JSON=$(printf '%s' "$YAML_CONTENT" | yq -o=json '.deployment.ports // []' -)
+          FIRST_PORT=$(echo "$PORTS_JSON" | jq -r '.[0] // empty')
           mapfile -t PORTS < <(echo "$PORTS_JSON" | jq -r '.[]')
 
-          PORTS_BLOCK = "$(
-            for p in \"${PORTS[@]}\"; do
-              printf \"\n- name: web-$p\nport: $p\"
-            done
-          )"
+          CONTAINER_PORTS_BLOCK=""
+          SERVICE_PORTS_BLOCK=""
+          
+          for p in "${PORTS[@]:-}"; do
+            CONTAINER_PORTS_BLOCK="${CONTAINER_PORTS_BLOCK}\n  - name: web-${p}\n    containerPort: ${p}"
+            SERVICE_PORTS_BLOCK="${SERVICE_PORTS_BLOCK}\n  - name: web-${p}\n    port: ${p}\n    targetPort: ${p}"
+          done
 
-          #Enregistrement
+          # Save
           {
             printf 'REPLICAS=%s\n' "$REPLICAS"
-            printf 'RESOURCES_BLOCK=%s\n' "$RESOURCES_BLOCK"
+            printf 'RESOURCES_BLOCK=%q\n' "$RESOURCES_BLOCK"
             printf 'FIRST_PORT=%s\n' "$FIRST_PORT"
-            printf 'PORTS_BLOCK=%s\n' "$PORTS_BLOCK"
-          } >> .build_env
+            printf 'CONTAINER_PORTS_BLOCK=%q\n' "$CONTAINER_PORTS_BLOCK"
+            printf 'SERVICE_PORTS_BLOCK=%q\n' "$SERVICE_PORTS_BLOCK"
+          } > .build_env
+
+        '''
+
+      }
+
+    }
+
+    stage('Render manifests') {
+
+      steps {
+        sh '''#!/usr/bin/env bash
+          set -euo pipefail
+          
+          source .build_env
+
+          # Deployment
+          cp template.deployment.yaml "${APP_NAME}.deployment.yaml"
+          sed -i \
+            -e "s|__APP_NAME__|${APP_NAME}|g" \
+            -e "s|__IMAGE_URL__|${IMAGE_URL}|g" \
+            -e "s|__REPLICAS__|${REPLICAS}|g" \
+            "${APP_NAME}.deployment.yaml"
+
+          if [ -n "${CONTAINER_PORTS_BLOCK}" ]; then
+            sed -i "s|__PORTS__|${CONTAINER_PORTS_BLOCK}|" "${APP_NAME}.deployment.yaml"
+          else
+            sed -i '/^[[:space:]]*ports:/d; /^[[:space:]]*__PORTS__/d' "${APP_NAME}.deployment.yaml"
+          fi
+
+          if [ -n "${RESOURCES_BLOCK}" ]; then
+            sed -i "s|__RESOURCES__|${RESOURCES_BLOCK}|" "${APP_NAME}.deployment.yaml"
+          else
+            sed -i '/^[[:space:]]*resources:/d; /^[[:space:]]*__RESOURCES__/d' "${APP_NAME}.deployment.yaml"
+          fi
+
+
+          if [ -n "${FIRST_PORT}" ]; then
+        
+            # Service
+            cp template.service.yaml "${APP_NAME}.service.yaml"
+            sed -i \
+              -e "s|__APP_NAME__|${APP_NAME}|g" \
+              -e "s|__APP_NAME_DNS__|${APP_NAME}-dns|g" \
+              -e "s|__PORTS__|${SERVICE_PORTS_BLOCK}|" \
+              "${APP_NAME}.service.yaml"
+
+            # Ingress
+            cp template.ingress.yaml "${APP_NAME}.ingress.yaml"
+            sed -i \
+              -e "s|__APP_NAME_INGRESS__|${APP_NAME}-ingress|g" \
+              -e "s|__HOST_NAME__|${HOST_NAME}|g" \
+              -e "s|__APP_NAME_DNS__|${APP_NAME}-dns|g" \
+              -e "s|__PORT__|${FIRST_PORT}|g" \
+              "${APP_NAME}.ingress.yaml"
+          
+          fi
         
         '''
 
@@ -79,44 +135,24 @@ pipeline {
 
     }
 
-    stage('Write specs in the duplicates files') {
+    stage('Apply files') {
 
       steps {
+        sh '''#!/usr/bin/env bash
 
-        source .build_env
-        
-        #Deployment
-        cp template.deployment.yaml "${params.APP_NAME}.deployment.yaml"
-        sed -i \
-          -e "s|__APP_NAME__|${params.APP_NAME}|g" \
-          -e "s|__IMAGE_URL__|${IMAGE}|g" \
-          -e "s|__REPLICAS__|${REPLICAS}|g" \
-          "${APP}.deployment.yaml"
+          set -euo pipefail
 
-        ${PORTS_BLOCK} ? sed -i "s|__PORTS__|${PORTS_BLOCK}|" "${params.APP_NAME}.deployment.yaml" : sed -i "/__PORTS__/d" "${params.APP_NAME}.deployment.yaml"
+          kubectl apply -f "${APP_NAME}.deployment.yaml"
+          if [ -f "${APP_NAME}.service.yaml" ]; then
+            kubectl apply -f "${APP_NAME}.service.yaml"
+            kubectl apply -f "${APP_NAME}.ingress.yaml"
+          fi
 
-        ${RESOURCES_BLOCK} ? sed -i "s|__RESOURCES__|${RESOURCES_BLOCK}|" "${params.APP_NAME}.deployment.yaml" : sed -i "/__RESOURCES__/d" "${params.APP_NAME}.deployment.yaml"
-
-
-        if [ -n "${PORTS_BLOCK}" ]; then
-
-          #Ingress
-          cp template.ingress.yaml "${params.APP_NAME}.ingress.yaml"
-
-          #Service
-          cp template.service.yaml "${params.APP_NAME}.service.yaml"
-
-          #Traefik
-          cp traefik.deployment.yaml "${params.APP_NAME}.traefik.deployment.yaml"
-          cp traefik.rbac.yaml "${params.APP_NAME}.traefik.rbac.yaml"
-          cp traefik.service.yaml "${params.APP_NAME}.traefik.service.yaml"
-
-          // TODO: Remplir fichiers app-name.*.yaml
-        fi
-
+        '''
       }
 
     }
 
   }
+
 }
