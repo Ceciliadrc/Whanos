@@ -5,8 +5,8 @@ metadata:
   name: traefik
   namespace: kube-public
 ---
-kind: Deployment
 apiVersion: apps/v1
+kind: Deployment
 metadata:
   name: traefik
   namespace: kube-public
@@ -21,27 +21,28 @@ spec:
         app: traefik
         name: traefik
     spec:
-      serviceAccountName: traefik-ingress-controller
+      serviceAccountName: traefik
       restartPolicy: Always
       containers:
-      - image: traefik:3.1
-        name: traefik-ingress-lb
+      - name: traefik-ingress-lb
+        image: traefik:v3.1
         ports:
         - name: http
           containerPort: 80
         - name: admin
           containerPort: 8080
         args:
-        - --api
-        - --kubernetes
-        - --logLevel=INFO
+        - --api.dashboard=true
+        - --providers.kubernetesingress=true
+        - --entrypoints.web.address=:80
+        - --log.level=INFO
       affinity:
         podAntiAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
-            - labelSelector:
-                matchExpressions:
-                - key: app
-                  operator: In
-                  values:
-                  - traefik
-              topologyKey: "kubernetes.io/hostname"
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - traefik
+            topologyKey: "kubernetes.io/hostname"
