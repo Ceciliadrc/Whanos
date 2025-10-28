@@ -32,10 +32,8 @@ spec:
         - name: admin
           containerPort: 8080
         args:
-        - --api.dashboard=true
         - --providers.kubernetesingress=true
         - --entrypoints.web.address=:80
-        - --log.level=INFO
       affinity:
         podAntiAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:

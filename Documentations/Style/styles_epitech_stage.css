@@ -1,0 +1,172 @@
+@media screen {
+	.markdown-preview {
+    background-color: rgb(0, 0, 0);;
+		padding: 50px !important;
+    font-family: ProFontWindows Nerd Font Mono;
+	}
+}
+
+svg {
+	text-align: center;
+}
+
+p:has(img) {
+  text-align: center;
+}
+
+
+h1 {
+	color: rgb(255, 149, 0) !important;
+	text-align: center;
+  padding: 10px 10px 5px 10px !important;
+  font-size: 30px;
+}
+
+h2 {
+  color: rgb(255, 149, 0) !important;
+  padding-top: 5%;
+  border-bottom: 3px solid rgb(255, 149, 0) !important;
+  text-align: left;
+  break-before: always;
+  font-size: 28px;
+}
+
+h3 {
+	color: rgb(255, 149, 0) !important;
+  font-style: italic;
+  text-align: left;
+	border-bottom: none;
+  font-size: 26px;
+}
+
+h4 {
+	color: rgb(255, 149, 0) !important;
+  padding-top: 2%;
+  text-align: left;
+	border-bottom: none;
+  font-size: 24px;
+}
+
+h5 {
+  color: rgb(255, 149, 0) !important;
+  padding-top: 1%;
+  text-align: left;
+  font-size: 22px;
+}
+
+table tr th {
+    font-weight: bold;
+		background-color: rgb(255, 149, 0) !important;
+		color: rgb(0, 0, 0) !important;
+    text-align: center !important;
+    margin: 0;
+    padding: 6px 13px;
+}
+
+td {
+  background-color: rgb(32, 32, 32)
+}
+
+ul, ol, li {
+    margin: 5px 0 !important;
+    color: rgb(194, 194, 194);
+    text-align: left;
+    font-size: 20px;
+}
+
+a {
+  color: rgb(255, 149, 0) !important;
+  font-weight: bold !important;
+  text-decoration: underline !important;
+}
+
+p {
+  color: rgb(194, 194, 194);
+  text-align: left;
+  font-size: 18px;
+}
+
+li {
+    list-style: none;
+}
+
+li:before {
+    content: '⇀  ';
+    font-size:18px;
+    vertical-align:middle;
+    line-height:20px;
+    color: rgb(255, 0, 0);
+}
+
+strong {
+  color: rgb(255, 149, 0) !important;
+}
+
+em {
+  color: #B37440 !important;
+  font-weight: bold;
+}
+
+.img {
+  max-width: 100%;
+  height: auto;
+	text-align: center;
+}
+
+.info-note {	
+	background-color: rgb(194, 194, 194);
+    color: white;
+    border-radius: 5px;
+    padding: 8px;
+}
+
+.warning-note {	
+	background-color: darkorange;
+    color: white;
+    border-radius: 5px;
+    padding: 8px;
+}
+
+.danger-note {
+	background-color: red;
+    color: white;
+    border-radius: 5px;
+    padding: 8px;
+}
+
+.info-zone {
+    color: rgb(89, 100, 255); 
+    border-radius: 5px;
+    border: 1px solid rgb(89, 100, 255);
+    padding: 8px;
+}
+
+.warning-zone {
+    color: darkorange; 
+    border-radius: 5px;
+    border: 1px solid darkorange;
+    padding: 8px;
+}
+
+.danger-zone {
+    color: red;
+    border-radius: 5px;
+    border: 1px solid red;
+    padding: 8px;
+}
+
+.success-note {
+  background-color: rgb(0, 255, 21);
+    color: rgb(0, 0, 0);
+    border-radius: 5px;
+    padding: 8px;
+}
+
+@media print {
+	.sm-size {
+		font-size: 15px;
+	}
+	.xs-size {
+		font-size: 14px;
+	}
+}
