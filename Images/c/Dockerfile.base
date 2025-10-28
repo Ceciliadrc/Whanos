@@ -1,2 +1,5 @@
 FROM gcc:13.2
 WORKDIR /app
+
+ONBUILD COPY . .
+ONBUILD RUN make

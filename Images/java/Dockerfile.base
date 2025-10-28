@@ -1,2 +1,5 @@
 FROM openjdk:21
 WORKDIR /app
+
+ONBUILD COPY . .
+ONBUILD RUN mvn package
