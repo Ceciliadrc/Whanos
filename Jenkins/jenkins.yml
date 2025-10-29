@@ -1,20 +1,24 @@
 jenkins:
   systemMessage: "Welcome to the Whanos project configured by Configuration as Code plugin"
+  remotingSecurity:
+    enabled: True
   securityRealm:
     local:
       allowSignup: false
       users:
-        - name: "Admin"
-          id: "admin"
+        - id: "admin"
+          name: "Admin"
+          password: ${ADMIN_PASSWORD}
   authorizationStrategy:
     roleBased:
       roles:
         global:
           - name: "admin"
+            description: "Whanos admin"
             permissions:
               - "Overall/Administer"
-            entries:
-              - user: "admin"
+            assignments:
+              - "admin"
 
 jobs:
-  - file: /var/jenkins_home/Jenkins/jobs.groovy
+  - file: /Jenkins/jobs.groovy

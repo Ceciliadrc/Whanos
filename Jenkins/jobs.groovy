@@ -98,8 +98,28 @@ job('link-project') {
         stringParam('PROJECT_NAME', '', 'Name for the job to create')
     }
     steps {
-        parallel (
-                
-        )
+        dsl {
+            text('''
+                freeStyleJob("Projects/$PROJECT_NAME") {
+                    scm {
+                        git {
+                            remote {
+                                name("origin")
+                                url("$REPO_URL")
+                            }
+                        }
+                    }
+                    triggers {
+                        scm("* * * * *")
+                    }
+                    wrappers {
+                        preBuildCleanup()
+                    }
+                    steps {
+                        shell("/Jenkins/deploy.sh "$PROJECT_NAME"")
+                    }
+                }
+            ''')
+        }
     }
 }
