@@ -1,0 +1,12 @@
+configuration-as-code
+job-dsl
+script-security
+role-strategy
+git
+docker-plugin
+docker-workflow
+workflow-aggregator
+workflow-cps
+workflow-job
+pipeline-stage-view
+ws-cleanup
