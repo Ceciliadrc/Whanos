@@ -21,4 +21,4 @@ jenkins:
               - "admin"
 
 jobs:
-  - file: /Jenkins/jobs.groovy
+  - file: /Jenkins/job_dsl.groovy
