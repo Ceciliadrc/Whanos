@@ -20,5 +20,15 @@ jenkins:
             assignments:
               - "admin"
 
+unclassified:
+  location:
+    url: "http://localhost:8080/"
+  security:
+    scriptApproval:
+      approvedSignatures:
+        - "method java.lang.Process getInputStream"
+        - "method java.lang.Process waitFor"
+        - "staticMethod org.codehaus.groovy.runtime.DefaultGroovyMethods execute java.lang.String"
+
 jobs:
   - file: /Jenkins/job_dsl.groovy

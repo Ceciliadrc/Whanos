@@ -10,3 +10,5 @@ workflow-cps
 workflow-job
 pipeline-stage-view
 ws-cleanup
+matrix-auth
+credentials-binding
