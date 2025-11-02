@@ -45,18 +45,15 @@ sudo systemctl enable jenkins
 sudo mkdir -p /var/lib/jenkins/casc_configs
 
 #config jenkins
-sudo cp Jenkins/jenkins.yml /var/lib/jenkins/casc_configs/ 
+sudo cp Jenkins/jenkins.yml /var/lib/jenkins/casc_configs/
 sudo chown jenkins:jenkins /var/lib/jenkins/casc_configs/jenkins.yml
 
 sudo mkdir -p /etc/systemd/system/jenkins.service.d
-sudo tee /etc/systemd/system/jenkins.service.d/casc.conf << EOF
+sudo tee /etc/systemd/system/jenkins.service.d/casc.conf >/dev/null <<'EOF'
 [Service]
 Environment="CASC_JENKINS_CONFIG=/var/lib/jenkins/casc_configs/jenkins.yml"
 EOF
-
 sudo systemctl daemon-reload
-
-# redemarrer jenkins pour appliquer la config
 sudo systemctl restart jenkins
 
 # kubernetes

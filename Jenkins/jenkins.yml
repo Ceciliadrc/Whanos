@@ -30,5 +30,10 @@ unclassified:
         - "method java.lang.Process waitFor"
         - "staticMethod org.codehaus.groovy.runtime.DefaultGroovyMethods execute java.lang.String"
 
+configuration-as-code:
+  sources:
+    - file:
+        path: "/var/lib/jenkins/Jenkins/job_dsl.groovy"
+
 jobs:
-  - file: Jenkins/job_dsl.groovy
+  - file: []
