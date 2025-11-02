@@ -16,7 +16,7 @@ job('Whanos base images/whanos-c') {
         wrappers {
             preBuildCleanup()
         }
-        shell('docker build -t ${IMAGE_NAME_C} -f images/c/Dockerfile.base .')
+        shell('docker build -t ${IMAGE_NAME_C} -f ../Images/c/Dockerfile.base /Jenkins/images/c/')
     }
 }
 
@@ -28,7 +28,7 @@ job('Whanos base images/whanos-java') {
         wrappers {
             preBuildCleanup()
         }
-        shell('docker build -t ${IMAGE_NAME_JAVA} -f images/java/Dockerfile.base .')
+        shell('docker build -t ${IMAGE_NAME_JAVA} -f ../Images/java/Dockerfile.base /Jenkins/images/java/')
     }
 }
 
@@ -40,7 +40,7 @@ job('Whanos base images/whanos-javascript') {
         wrappers {
             preBuildCleanup()
         }
-        shell('docker build -t ${IMAGE_NAME_JAVASCRIPT} -f images/javascript/Dockerfile.base .')
+        shell('docker build -t ${IMAGE_NAME_JAVASCRIPT} -f ../Images/javascript/Dockerfile.base /Jenkins/images/javascript/')
     }
 }
 
@@ -52,7 +52,7 @@ job('Whanos base images/whanos-python') {
         wrappers {
             preBuildCleanup()
         }
-        shell('docker build -t ${IMAGE_NAME_PYTHON} -f images/python/Dockerfile.base .')
+        shell('docker build -t ${IMAGE_NAME_PYTHON} -f ../Images/python/Dockerfile.base /Jenkins/images/python/')
     }
 }
 
@@ -64,7 +64,7 @@ job('Whanos base images/whanos-befunge') {
         wrappers {
             preBuildCleanup()
         }
-        shell('docker build -t ${IMAGE_NAME_BEFUNGE} -f images/befunge/Dockerfile.base .')
+        shell('docker build -t ${IMAGE_NAME_BEFUNGE} -f ../Images/befunge/Dockerfile.base /Jenkins/images/befunge/')
     }
 }
 
