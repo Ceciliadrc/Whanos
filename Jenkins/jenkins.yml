@@ -31,4 +31,4 @@ unclassified:
         - "staticMethod org.codehaus.groovy.runtime.DefaultGroovyMethods execute java.lang.String"
 
 jobs:
-  - file: /var/jenkins_home/job_dsl.groovy
+  - file: Jenkins/job_dsl.groovy

@@ -54,7 +54,7 @@ if [ -f "whanos.yml" ]; then
 
     YAML_CONTENT=$(cat whanos.yml)
 
-    JENKINS_TOKEN=$(cat /var/jenkins_home/secrets/initialAdminPassword)
+    JENKINS_TOKEN=$(cat Jenkins/secrets/initialAdminPassword)
 
     curl -X POST "http://localhost:8080/job/Deployments/job/whanos-deploy/buildWithParameters" \
         --user "admin:${JENKINS_TOKEN}" \

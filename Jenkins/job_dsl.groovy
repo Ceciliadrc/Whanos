@@ -117,8 +117,8 @@ job('link-project') {
                     }
                     steps {
                         shell("""
-                            chmod +x /var/jenkins_home/deploy.sh
-                            /var/jenkins_home/deploy.sh "${PROJECT_NAME}"
+                            chmod +x Jenkins/deploy.sh
+                            Jenkins/deploy.sh "${PROJECT_NAME}"
                         """)
                     }
                 }
